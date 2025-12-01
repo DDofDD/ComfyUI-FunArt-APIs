@@ -87,9 +87,24 @@ class Wan2_5ImageEdit:
         if not image_url_1:
             raise ValueError("至少需要提供一张图片URL")
 
+        # 调试信息：打印关键参数
+        print("=" * 60)
+        print("🔍 Wan2_5ImageEdit 调试信息")
+        print("-" * 60)
+        print(f"API Key: {api_key}")
+        print(f"Prompt: {prompt[:50]}..." if len(prompt) > 50 else f"Prompt: {prompt}")
+        print(f"Image URL 1: {image_url_1}")
+        print(f"Image URL 2: {image_url_2 if image_url_2 else '(未提供)'}")
+        print(f"Seed: {seed}")
+        print(f"生成数量: {n}")
+        print("=" * 60)
+
         # 设置 API Key
         dashscope.api_key = api_key
         dashscope.base_http_api_url = "https://dashscope.aliyuncs.com/api/v1"
+
+        print(f"✅ 已设置 dashscope.api_key: {dashscope.api_key[:10]}...")
+        print(f"✅ 已设置 dashscope.base_http_api_url: {dashscope.base_http_api_url}")
 
         # 准备图片URL列表
         image_urls = [image_url_1]
@@ -98,7 +113,6 @@ class Wan2_5ImageEdit:
 
         # 准备API调用参数
         params = {
-            "api_key": api_key,
             "model": "wan2.5-i2i-preview",
             "prompt": prompt,
             "images": image_urls,
