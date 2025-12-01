@@ -153,11 +153,35 @@ class Wan2_5ImageEdit:
             params["seed"] = seed
 
         # 调用 API
+        print("🚀 正在调用 DashScope API (模型: wan2.5-i2i-preview)")
+        print(f"📝 Prompt: {prompt[:100]}..." if len(prompt) > 100 else f"📝 Prompt: {prompt}")
+        print(f"🖼️  图片数量: {len(image_base64_list)}")
+
         response = ImageSynthesis.call(**params)
 
-        # 检查响应
+        print(f"📥 API 响应状态: {response.status_code}")
+        print(f"📋 Request ID: {response.request_id if hasattr(response, 'request_id') else 'N/A'}")
+
+        # 检查响应状态
         if response.status_code != HTTPStatus.OK:
             raise RuntimeError(f"API调用失败: {response.code} - {response.message}")
+
+        # 检查结果是否为空
+        if not response.output or not response.output.results:
+            print("=" * 60)
+            print("❌ API 调用异常：返回成功但没有生成图片")
+            print("-" * 60)
+            print(f"Status Code: {response.status_code}")
+            print(f"Request ID: {response.request_id if hasattr(response, 'request_id') else 'N/A'}")
+            print(f"Code: {response.code if hasattr(response, 'code') else 'N/A'}")
+            print(f"Message: {response.message if hasattr(response, 'message') else 'N/A'}")
+            print(f"Output: {response.output if hasattr(response, 'output') else 'N/A'}")
+            print("=" * 60)
+
+            error_msg = "API 返回成功但没有生成图片，可能是配额限制、频率限制或其他 API 问题"
+            raise RuntimeError(error_msg)
+
+        print(f"✅ 成功生成 {len(response.output.results)} 张图片")
 
         # 下载并转换生成的图片（只有一张）
         result = response.output.results[0]
