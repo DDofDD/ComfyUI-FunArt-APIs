@@ -45,7 +45,16 @@ class Wan2_5ImageEdit:
             "optional": {
                 "image_2": ("IMAGE", {"tooltip": "第二张输入图像（可选）"}),
                 "negative_prompt": ("STRING", {"multiline": True, "default": "", "tooltip": "负面提示词"}),
-                "seed": ("INT", {"default": -1, "min": -1, "max": 2**32 - 1, "step": 1, "tooltip": "随机种子，-1表示随机"}),
+                "seed": (
+                    "INT",
+                    {
+                        "default": -1,
+                        "min": -1,
+                        "max": 2147483647,
+                        "step": 1,
+                        "tooltip": "随机种子，-1表示随机，范围[0,2147483647]",
+                    },
+                ),
                 "watermark": ("BOOLEAN", {"default": False, "tooltip": "是否添加水印"}),
             },
         }
@@ -150,7 +159,12 @@ class Wan2_5ImageEdit:
             params["negative_prompt"] = negative_prompt
 
         if seed >= 0:
-            params["seed"] = seed
+            # 确保 seed 在 DashScope API 允许的范围内 [0, 2147483647]
+            # 如果超出范围，使用模运算限制到有效范围
+            valid_seed = seed % 2147483648  # 2^31
+            if valid_seed != seed:
+                print(f"⚠️  Seed {seed} 超出 API 范围，已调整为 {valid_seed}")
+            params["seed"] = valid_seed
 
         # 调用 API
         print("🚀 正在调用 DashScope API (模型: wan2.5-i2i-preview)")
