@@ -1,6 +1,6 @@
 """
-Image Edit Nodes for ComfyUI
-包含各种图像编辑相关的节点，使用不同的 AI 模型
+Wan 2.5 图像编辑节点
+使用 DashScope ImageSynthesis API 实现图生图功能
 """
 
 from inspect import cleandoc
@@ -63,7 +63,7 @@ class Wan2_5ImageEdit:
     RETURN_NAMES = ("image",)
     DESCRIPTION = cleandoc(__doc__)
     FUNCTION = "generate_image"
-    CATEGORY = "FunArt/ImageEdit"
+    CATEGORY = "FunArt/Wan"
 
     def tensor_to_base64(self, tensor):
         """将ComfyUI的IMAGE tensor转换为base64字符串"""
@@ -203,14 +203,3 @@ class Wan2_5ImageEdit:
 
         # 返回单张图片，shape: [1, H, W, C]
         return (output_tensor,)
-
-
-# 节点类映射 - 用于ComfyUI识别和加载节点
-NODE_CLASS_MAPPINGS = {
-    "Wan2_5ImageEdit": Wan2_5ImageEdit,
-}
-
-# 节点显示名称映射 - 在ComfyUI界面中显示的友好名称
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "Wan2_5ImageEdit": "Wan 2.5 图像编辑",
-}
