@@ -76,7 +76,7 @@ def main():
             prompt=prompt,
             negative_prompt=negative_prompt,
             n=1,  # 生成图片数量
-            size="1024*1024",  # 输出尺寸
+            size="1280*1280",  # 输出尺寸（默认值）
             prompt_extend=True,  # 提示词扩展
             watermark=False,  # 不添加水印
             seed=12345,  # 随机种子，用于复现结果
@@ -127,7 +127,8 @@ def main():
     print("   - prompt: 图像生成提示词 (必需)")
     print("   - negative_prompt: 负面提示词")
     print("   - n: 生成图片数量 (1-4)")
-    print("   - size: 输出尺寸，如 '1024*1024'")
+    print("   - size: 输出尺寸，默认 '1280*1280'")
+    print("     限制: 总像素在[768*768, 1440*1440]之间，宽高比在[1:4, 4:1]之间")
     print("   - prompt_extend: 是否扩展提示词 (默认 True)")
     print("   - seed: 随机种子")
     print("   - watermark: 是否添加水印")

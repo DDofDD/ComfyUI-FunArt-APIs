@@ -22,14 +22,56 @@ except ImportError:
     DASHSCOPE_AVAILABLE = False
 
 
-# 支持的图片尺寸
-SUPPORTED_SIZES = [
-    "1024*1024",
-    "768*1024",
-    "1024*768",
-    "720*1280",
-    "1280*720",
-]
+# 像素限制常量
+MIN_PIXELS = 768 * 768  # 589,824
+MAX_PIXELS = 1440 * 1440  # 2,073,600
+MIN_ASPECT_RATIO = 1 / 4  # 1:4
+MAX_ASPECT_RATIO = 4 / 1  # 4:1
+
+
+def validate_size(width: int, height: int) -> tuple[bool, str]:
+    """
+    验证图片尺寸是否符合 wan2.5-t2i-preview 模型要求
+
+    要求：
+    - 总像素在 [768*768, 1440*1440] 之间
+    - 宽高比范围为 [1:4, 4:1]
+
+    Args:
+        width: 图片宽度
+        height: 图片高度
+
+    Returns:
+        (is_valid, error_message)
+    """
+    total_pixels = width * height
+    aspect_ratio = width / height
+
+    if total_pixels < MIN_PIXELS:
+        return (
+            False,
+            f"总像素数 {total_pixels:,} 小于最小值 {MIN_PIXELS:,} (768*768)。" f"当前尺寸: {width}*{height}",
+        )
+
+    if total_pixels > MAX_PIXELS:
+        return (
+            False,
+            f"总像素数 {total_pixels:,} 大于最大值 {MAX_PIXELS:,} (1440*1440)。" f"当前尺寸: {width}*{height}",
+        )
+
+    if aspect_ratio < MIN_ASPECT_RATIO:
+        return (
+            False,
+            f"宽高比 {aspect_ratio:.2f} 小于最小值 1:4 (0.25)。" f"当前尺寸: {width}*{height}，请增加宽度或减少高度",
+        )
+
+    if aspect_ratio > MAX_ASPECT_RATIO:
+        return (
+            False,
+            f"宽高比 {aspect_ratio:.2f} 大于最大值 4:1 (4.0)。" f"当前尺寸: {width}*{height}，请减少宽度或增加高度",
+        )
+
+    return True, ""
 
 
 class Wan2_5T2I:
@@ -50,7 +92,26 @@ class Wan2_5T2I:
             },
             "optional": {
                 "negative_prompt": ("STRING", {"multiline": True, "default": "", "tooltip": "负面提示词"}),
-                "size": (SUPPORTED_SIZES, {"default": "1024*1024", "tooltip": "输出图片尺寸"}),
+                "width": (
+                    "INT",
+                    {
+                        "default": 1280,
+                        "min": 256,
+                        "max": 2048,
+                        "step": 8,
+                        "tooltip": "输出图片宽度。总像素需在[768*768, 1440*1440]之间，宽高比需在[1:4, 4:1]之间",
+                    },
+                ),
+                "height": (
+                    "INT",
+                    {
+                        "default": 1280,
+                        "min": 256,
+                        "max": 2048,
+                        "step": 8,
+                        "tooltip": "输出图片高度。总像素需在[768*768, 1440*1440]之间，宽高比需在[1:4, 4:1]之间",
+                    },
+                ),
                 "prompt_extend": ("BOOLEAN", {"default": True, "tooltip": "是否扩展提示词"}),
                 "seed": (
                     "INT",
@@ -107,7 +168,8 @@ class Wan2_5T2I:
         api_key,
         prompt,
         negative_prompt="",
-        size="1024*1024",
+        width=1280,
+        height=1280,
         prompt_extend=True,
         seed=-1,
         watermark=False,
@@ -124,9 +186,17 @@ class Wan2_5T2I:
         if not prompt:
             raise ValueError("请提供图像生成提示词")
 
+        # 验证图片尺寸
+        is_valid, error_msg = validate_size(width, height)
+        if not is_valid:
+            raise ValueError(f"图片尺寸不符合要求: {error_msg}")
+
         # 设置 API Key
         dashscope.api_key = api_key
         dashscope.base_http_api_url = "https://dashscope.aliyuncs.com/api/v1"
+
+        # 构造 size 字符串
+        size = f"{width}*{height}"
 
         # 准备API调用参数
         params = {
