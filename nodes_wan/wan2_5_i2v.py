@@ -47,21 +47,19 @@ SUPPORTED_RESOLUTIONS = ["1080P", "720P", "480P"]
 
 class Wan2_5_I2V:
     """
-    Wan 2.5 图生视频节点 - 使用 DashScope VideoSynthesis API
+    Wan 2.5 图生视频节点 - 使用阿里云百炼 DashScope VideoSynthesis API
     基于首帧图片生成视频，支持音频驱动
 
     模型: wan2.5-i2v-preview
     支持功能: 首帧图生视频，音频驱动，提示词扩展
+    
+    API文档: https://bailian.console.aliyun.com/?spm=5176.fcnext.console-base_product-drawer-right.dproducts-and-services-sfm.62952f033vAVNr&tab=api#/api/?type=model&url=2867393
     """
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "api_key": (
-                    "STRING",
-                    {"multiline": False, "default": "", "tooltip": "DashScope API密钥"},
-                ),
                 "prompt": (
                     "STRING",
                     {"multiline": True, "default": "", "tooltip": "视频生成提示词"},
@@ -79,6 +77,17 @@ class Wan2_5_I2V:
                 ),
             },
             "optional": {
+                "api_key": (
+                    "STRING",
+                    {
+                        "multiline": False,
+                        "default": "",
+                        "tooltip": (
+                            "DashScope API密钥（可选）。\n"
+                            "优先使用此处配置的密钥；若未配置，则使用环境变量 DASHSCOPE_API_KEY"
+                        ),
+                    },
+                ),
                 "audio": (
                     "AUDIO",
                     {
@@ -155,7 +164,7 @@ class Wan2_5_I2V:
         start_time = time.time()
 
         # 下载视频
-        print("📥 正在下载视频...")
+        print("Downloading video...")
         response = requests.get(url, timeout=120)
         response.raise_for_status()
 
@@ -173,8 +182,8 @@ class Wan2_5_I2V:
 
         download_time = time.time() - start_time
         file_size_mb = len(response.content) / (1024 * 1024)
-        print(f"⏱️  下载视频耗时: {download_time:.3f}秒 (文件大小: {file_size_mb:.2f}MB)")
-        print(f"💾 视频已保存到临时目录: {video_path}")
+        print(f"Video download time: {download_time:.3f}s (file size: {file_size_mb:.2f}MB)")
+        print(f"Video saved to temporary directory: {video_path}")
 
         return video_path
 
@@ -204,7 +213,7 @@ class Wan2_5_I2V:
         encoded_string = base64.b64encode(img_bytes).decode("utf-8")
 
         elapsed_time = time.time() - start_time
-        print(f"⏱️  tensor_to_base64_image 耗时: {elapsed_time:.3f}秒 (图片大小: {len(encoded_string)//1024}KB)")
+        print(f"tensor_to_base64_image time: {elapsed_time:.3f}s (image size: {len(encoded_string)//1024}KB)")
 
         # 返回 data URI 格式
         return f"data:image/png;base64,{encoded_string}"
@@ -247,16 +256,16 @@ class Wan2_5_I2V:
         encoded_string = base64.b64encode(audio_bytes).decode("utf-8")
 
         elapsed_time = time.time() - start_time
-        print(f"⏱️  audio_to_base64 耗时: {elapsed_time:.3f}秒 (音频大小: {len(encoded_string)//1024}KB)")
+        print(f"audio_to_base64 time: {elapsed_time:.3f}s (audio size: {len(encoded_string)//1024}KB)")
 
         # 返回 data URI 格式
         return f"data:audio/wav;base64,{encoded_string}"
 
     def generate_video(
         self,
-        api_key,
         prompt,
         image,
+        api_key="",
         audio=None,
         resolution="1080P",
         duration=5,
@@ -271,14 +280,20 @@ class Wan2_5_I2V:
         if not DASHSCOPE_AVAILABLE:
             raise ImportError("dashscope 未安装。请运行: pip install dashscope requests")
 
-        if not api_key:
-            raise ValueError("请提供 DashScope API Key")
-
         if not prompt:
             raise ValueError("请提供视频生成提示词")
 
+        # 获取 API Key：优先使用传入的参数，否则从环境变量读取
+        effective_api_key = api_key if api_key else os.environ.get("DASHSCOPE_API_KEY", "")
+        if not effective_api_key:
+            raise ValueError(
+                "请提供 DashScope API Key。\n"
+                "方式1：在节点中配置 api_key 参数\n"
+                "方式2：设置环境变量 DASHSCOPE_API_KEY"
+            )
+
         # 设置 API Key
-        dashscope.api_key = api_key
+        dashscope.api_key = effective_api_key
         dashscope.base_http_api_url = "https://dashscope.aliyuncs.com/api/v1"
 
         # 将 IMAGE tensor 转换为 base64
@@ -307,53 +322,53 @@ class Wan2_5_I2V:
         if seed >= 0:
             valid_seed = seed % 2147483648
             if valid_seed != seed:
-                print(f"⚠️  Seed {seed} 超出 API 范围，已调整为 {valid_seed}")
+                print(f"Warning: Seed {seed} out of API range, adjusted to {valid_seed}")
             params["seed"] = valid_seed
 
         # ========== 步骤1: 异步调用 ==========
-        print("🚀 正在调用 DashScope VideoSynthesis API (模型: wan2.5-i2v-preview)")
-        print(f"📝 Prompt: {prompt[:100]}..." if len(prompt) > 100 else f"📝 Prompt: {prompt}")
-        print(f"📐 Resolution: {resolution}, Duration: {duration}s")
-        print(f"🎵 Audio: {'有' if audio is not None else '无'}")
+        print("Calling DashScope VideoSynthesis API (model: wan2.5-i2v-preview)")
+        print(f"Prompt: {prompt[:100]}..." if len(prompt) > 100 else f"Prompt: {prompt}")
+        print(f"Resolution: {resolution}, Duration: {duration}s")
+        print(f"Audio: {'Yes' if audio is not None else 'No'}")
 
         rsp = VideoSynthesis.async_call(**params)
 
-        print(f"📋 异步调用响应: Task ID = {rsp.output.task_id if rsp.output else 'N/A'}")
+        print(f"Async call response: Task ID = {rsp.output.task_id if rsp.output else 'N/A'}")
 
         if rsp.status_code != HTTPStatus.OK:
-            raise RuntimeError(f"API异步调用失败: {rsp.code} - {rsp.message}")
+            raise RuntimeError(f"API async call failed: {rsp.code} - {rsp.message}")
 
         task_id = rsp.output.task_id
-        print(f"✅ 任务已提交! Task ID: {task_id}")
+        print(f"Task submitted! Task ID: {task_id}")
 
         # ========== 步骤2: 等待任务完成 ==========
-        print("⏳ 等待视频生成完成 (可能需要几分钟)...")
+        print("Waiting for video generation to complete (may take a few minutes)...")
 
         result = VideoSynthesis.wait(task=rsp, api_key=api_key)
 
-        print(f"📥 最终响应状态: {result.status_code}")
+        print(f"Final response status: {result.status_code}")
 
         if result.status_code != HTTPStatus.OK:
-            raise RuntimeError(f"视频生成失败: {result.code} - {result.message}")
+            raise RuntimeError(f"Video generation failed: {result.code} - {result.message}")
 
         if not result.output or not result.output.video_url:
             print("=" * 60)
-            print("❌ API 调用异常：返回成功但没有生成视频")
+            print("API call error: Returned success but no video generated")
             print("-" * 60)
             print(f"Status Code: {result.status_code}")
             print(f"Task ID: {task_id}")
             print(f"Output: {result.output if hasattr(result, 'output') else 'N/A'}")
             print("=" * 60)
-            raise RuntimeError("API 返回成功但没有生成视频")
+            raise RuntimeError("API returned success but no video generated")
 
         video_url = result.output.video_url
-        print("✅ 视频生成成功!")
-        print(f"🎬 视频URL: {video_url}")
+        print("Video generated successfully!")
+        print(f"Video URL: {video_url}")
 
         # 打印扩展后的提示词（如果有）
         if hasattr(result.output, "actual_prompt") and result.output.actual_prompt:
             actual_prompt = result.output.actual_prompt
-            print(f"📝 扩展后提示词: {actual_prompt[:100]}..." if len(actual_prompt) > 100 else f"📝 扩展后提示词: {actual_prompt}")
+            print(f"Extended prompt: {actual_prompt[:100]}..." if len(actual_prompt) > 100 else f"Extended prompt: {actual_prompt}")
 
         # 下载视频到临时目录
         video_path = self.download_video(video_url, filename_prefix="wan_i2v")

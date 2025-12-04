@@ -7,10 +7,47 @@ FunArt's built-in third-party API
 
 ## Quickstart
 
-1. Install [ComfyUI](https://docs.comfy.org/get_started).
-1. Install [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager)
-1. Look up this extension in ComfyUI-Manager. If you are installing manually, clone this repository under `ComfyUI/custom_nodes`.
-1. Restart ComfyUI.
+### Installation Steps
+
+1. Log in to your ComfyUI instance
+
+2. Navigate to the custom_nodes directory
+   ```bash
+   cd ~/comfyui/custom_nodes
+   ```
+
+3. Clone this repository
+   ```bash
+   git clone <repository-url>
+   cd ComfyUI-FunArt-APIs
+   ```
+
+4. Install dependencies
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. Restart ComfyUI
+   - Restart ComfyUI via ComfyUI-Manager
+   - Or manually restart the ComfyUI service
+
+### Usage Examples
+
+After installation, you can import and use the example workflows from the `workflows/` directory:
+
+- `Wan2_5_I2V/` - Image-to-Video example
+- `Wan2_5_T2V/` - Text-to-Video example
+- `Wan2_5_T2I/` - Text-to-Image example
+- `Wan2_5_ImageEdit/` - Image editing example
+
+### API Key Configuration
+
+Two methods are supported for configuring the DashScope API Key:
+
+1. **Configure in workflow nodes**: Fill in the `api_key` parameter directly in the node
+2. **Use environment variable**: Set the environment variable `DASHSCOPE_API_KEY`
+
+The key configured in the workflow takes priority; if not configured, the environment variable will be used.
 
 # Features
 
