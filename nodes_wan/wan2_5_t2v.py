@@ -323,7 +323,7 @@ class Wan2_5_T2V:
         # ========== 步骤2: 等待任务完成 ==========
         print("Waiting for video generation to complete (may take a few minutes)...")
 
-        result = VideoSynthesis.wait(task=rsp, api_key=api_key)
+        result = VideoSynthesis.wait(task=rsp, api_key=effective_api_key)
 
         print(f"Final response status: {result.status_code}")
 
