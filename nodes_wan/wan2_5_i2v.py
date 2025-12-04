@@ -23,6 +23,13 @@ except ImportError:
     FOLDER_PATHS_AVAILABLE = False
 
 try:
+    from comfy_api.video_types import VideoFromFile
+
+    VIDEO_TYPES_AVAILABLE = True
+except ImportError:
+    VIDEO_TYPES_AVAILABLE = False
+
+try:
     import dashscope
     from dashscope import VideoSynthesis
     import requests
@@ -401,7 +408,11 @@ class Wan2_5I2V:
         frames, frame_rate, video_path = self.download_and_extract_frames(video_url, filename_prefix="wan_i2v")
 
         # 构造 VIDEO 类型输出 (ComfyUI 官方格式)
-        # VIDEO 类型是一个元组: (source_path, video_dict)
-        video_output = (video_path, {"source": video_path, "fps": frame_rate})
+        # 使用 VideoFromFile 类创建 VIDEO 对象
+        if VIDEO_TYPES_AVAILABLE:
+            video_output = VideoFromFile(video_path)
+        else:
+            # 回退方案：直接返回路径
+            video_output = video_path
 
         return (video_output, frames, video_path)
