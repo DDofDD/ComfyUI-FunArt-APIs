@@ -63,7 +63,7 @@ SUPPORTED_SIZES = [
 ]
 
 
-class Wan2_5T2V:
+class Wan2_5_T2V:
     """
     Wan 2.5 文生视频节点 - 使用 DashScope VideoSynthesis API
     通过文字描述生成视频，支持音频驱动

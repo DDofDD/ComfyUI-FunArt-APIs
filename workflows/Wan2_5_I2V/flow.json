@@ -1,0 +1,60 @@
+{
+  "2": {
+    "inputs": {
+      "image": "rap.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "3": {
+    "inputs": {
+      "audio": "rap.mp3",
+      "audioUI": ""
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "7": {
+    "inputs": {
+      "filename_prefix": "video/i2v",
+      "format": "mp4",
+      "codec": "auto",
+      "video": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "保存视频"
+    }
+  },
+  "15": {
+    "inputs": {
+      "api_key": "sk-fb22d887e7614115be763b265ddbff91",
+      "prompt": "一幅都市奇幻艺术的场景。一个充满动感的涂鸦艺术角色。一个由喷漆所画成的少年，正从一面混凝土墙上活过来。他一边用极快的语速演唱一首英文rap，一边摆着一个经典的、充满活力的说唱歌手姿势。场景设定在夜晚一个充满都市感的铁路桥下。灯光来自一盏孤零零的街灯，营造出电影般的氛围，充满高能量和惊人的细节。视频的音频部分完全由少年的rap构成，没有其他对话或杂音。",
+      "resolution": "480P",
+      "duration": 5,
+      "prompt_extend": true,
+      "negative_prompt": "",
+      "seed": 2112489548,
+      "watermark": false,
+      "image": [
+        "2",
+        0
+      ],
+      "audio": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "Wan2_5I2V",
+    "_meta": {
+      "title": "Wan 2.5 图生视频"
+    }
+  }
+}

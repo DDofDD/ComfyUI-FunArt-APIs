@@ -45,7 +45,7 @@ except ImportError:
 SUPPORTED_RESOLUTIONS = ["1080P", "720P", "480P"]
 
 
-class Wan2_5I2V:
+class Wan2_5_I2V:
     """
     Wan 2.5 图生视频节点 - 使用 DashScope VideoSynthesis API
     基于首帧图片生成视频，支持音频驱动

@@ -1,0 +1,19 @@
+{
+  "last_node_id": 0,
+  "last_link_id": 0,
+  "nodes": [],
+  "links": [],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1,
+      "offset": [0, 0]
+    }
+  },
+  "version": 0.4,
+  "workflow_info": {
+    "name": "Wan 2.5 文生图工作流示例",
+    "description": "使用 Wan2_5T2I 节点进行文生图的示例工作流"
+  }
+}

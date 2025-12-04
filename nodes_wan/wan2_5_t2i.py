@@ -74,7 +74,7 @@ def validate_size(width: int, height: int) -> tuple[bool, str]:
     return True, ""
 
 
-class Wan2_5T2I:
+class Wan2_5_T2I:
     """
     Wan 2.5 文生图节点 - 使用 DashScope ImageSynthesis API
     通过文字描述生成图像

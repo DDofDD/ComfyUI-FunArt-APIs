@@ -23,7 +23,7 @@ except ImportError:
     DASHSCOPE_AVAILABLE = False
 
 
-class Wan2_5ImageEdit:
+class Wan2_5_ImageEdit:
     """
     Wan 2.5 图像编辑节点 - 使用 DashScope ImageSynthesis API
     支持通过自然语言描述对图像进行编辑和合成
