@@ -129,8 +129,8 @@ class Wan2_5I2V:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "INT", "STRING")
-    RETURN_NAMES = ("frames", "frame_rate", "video_path")
+    RETURN_TYPES = ("VIDEO", "IMAGE", "STRING")
+    RETURN_NAMES = ("video", "frames", "video_path")
     OUTPUT_NODE = True
     DESCRIPTION = cleandoc(__doc__)
     FUNCTION = "generate_video"
@@ -400,4 +400,8 @@ class Wan2_5I2V:
         # 下载视频并提取帧
         frames, frame_rate, video_path = self.download_and_extract_frames(video_url, filename_prefix="wan_i2v")
 
-        return (frames, frame_rate, video_path)
+        # 构造 VIDEO 类型输出 (ComfyUI 官方格式)
+        # VIDEO 类型是一个元组: (source_path, video_dict)
+        video_output = (video_path, {"source": video_path, "fps": frame_rate})
+
+        return (video_output, frames, video_path)
