@@ -11,9 +11,6 @@ import time
 import uuid
 from http import HTTPStatus
 
-import torch
-import numpy as np
-
 try:
     import folder_paths
 
@@ -35,18 +32,11 @@ except ImportError:
 # 尝试导入音频处理库
 try:
     import scipy.io.wavfile as wavfile
+    import numpy as np
 
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-
-# 尝试导入视频处理库
-try:
-    import cv2
-
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
 
 
 # 支持的视频尺寸 (按分辨率档位分组)
@@ -147,39 +137,36 @@ class Wan2_5T2V:
             },
         }
 
-    RETURN_TYPES = ("VIDEO", "IMAGE", "STRING")
-    RETURN_NAMES = ("video", "frames", "video_path")
+    RETURN_TYPES = ("VIDEO",)
+    RETURN_NAMES = ("video",)
     OUTPUT_NODE = True
     DESCRIPTION = cleandoc(__doc__)
     FUNCTION = "generate_video"
     CATEGORY = "FunArt/Wan"
 
-    def get_output_directory(self):
-        """获取视频输出目录"""
+    def get_temp_directory(self):
+        """获取临时目录（output/temp）"""
         if FOLDER_PATHS_AVAILABLE:
-            return folder_paths.get_output_directory()
+            output_dir = folder_paths.get_output_directory()
         else:
             # 回退到当前目录下的 output 文件夹
             output_dir = os.path.join(os.getcwd(), "output")
-            os.makedirs(output_dir, exist_ok=True)
-            return output_dir
 
-    def download_and_extract_frames(self, url, filename_prefix="wan_t2v"):
-        """下载视频并提取帧
+        # 在 output 下创建 temp 子目录
+        temp_dir = os.path.join(output_dir, "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        return temp_dir
+
+    def download_video(self, url, filename_prefix="wan_t2v"):
+        """下载视频到临时目录
 
         Args:
             url: 视频URL
             filename_prefix: 文件名前缀
 
         Returns:
-            (frames_tensor, frame_rate, video_path)
-            - frames_tensor: IMAGE tensor [B, H, W, C]
-            - frame_rate: 视频帧率
-            - video_path: 保存的视频文件路径
+            video_path: 保存的视频文件路径
         """
-        if not CV2_AVAILABLE:
-            raise ImportError("cv2 (opencv-python) 未安装，无法提取视频帧。请运行: pip install opencv-python")
-
         start_time = time.time()
 
         # 下载视频
@@ -192,9 +179,9 @@ class Wan2_5T2V:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         filename = f"{filename_prefix}_{timestamp}_{unique_id}.mp4"
 
-        # 保存到输出目录
-        output_dir = self.get_output_directory()
-        video_path = os.path.join(output_dir, filename)
+        # 保存到临时目录
+        temp_dir = self.get_temp_directory()
+        video_path = os.path.join(temp_dir, filename)
 
         with open(video_path, "wb") as f:
             f.write(response.content)
@@ -202,41 +189,9 @@ class Wan2_5T2V:
         download_time = time.time() - start_time
         file_size_mb = len(response.content) / (1024 * 1024)
         print(f"⏱️  下载视频耗时: {download_time:.3f}秒 (文件大小: {file_size_mb:.2f}MB)")
-        print(f"💾 视频已保存: {video_path}")
+        print(f"💾 视频已保存到临时目录: {video_path}")
 
-        # 提取视频帧
-        print("🎞️  正在提取视频帧...")
-        extract_start = time.time()
-
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise RuntimeError(f"无法打开视频文件: {video_path}")
-
-        # 获取视频帧率
-        frame_rate = int(cap.get(cv2.CAP_PROP_FPS))
-
-        frames = []
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            # BGR -> RGB
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            # 归一化到 [0, 1]
-            frame_normalized = frame_rgb.astype(np.float32) / 255.0
-            frames.append(frame_normalized)
-
-        cap.release()
-
-        # 转换为 tensor [B, H, W, C]
-        frames_tensor = torch.from_numpy(np.stack(frames, axis=0))
-
-        extract_time = time.time() - extract_start
-        total_time = time.time() - start_time
-        print(f"⏱️  提取帧耗时: {extract_time:.3f}秒 (共 {len(frames)} 帧, {frame_rate} fps)")
-        print(f"⏱️  总耗时: {total_time:.3f}秒")
-
-        return frames_tensor, frame_rate, video_path
+        return video_path
 
     def audio_to_base64(self, audio):
         """将ComfyUI的AUDIO转换为base64字符串
@@ -379,10 +334,10 @@ class Wan2_5T2V:
             actual_prompt = result.output.actual_prompt
             print(f"📝 扩展后提示词: {actual_prompt[:100]}..." if len(actual_prompt) > 100 else f"📝 扩展后提示词: {actual_prompt}")
 
-        # 下载视频并提取帧
-        frames, frame_rate, video_path = self.download_and_extract_frames(video_url, filename_prefix="wan_t2v")
+        # 下载视频到临时目录
+        video_path = self.download_video(video_url, filename_prefix="wan_t2v")
 
         # 构造 VIDEO 类型输出 (ComfyUI 官方格式)
         video_output = VideoFromFile(video_path)
 
-        return (video_output, frames, video_path)
+        return (video_output,)
