@@ -46,10 +46,7 @@ class Wan2_5_T2I:
                     {
                         "multiline": False,
                         "default": "",
-                        "tooltip": (
-                            "DashScope API密钥（可选）。\n"
-                            "优先使用此处配置的密钥；若未配置，则使用环境变量 DASHSCOPE_API_KEY"
-                        ),
+                        "tooltip": ("DashScope API密钥（可选）。\n" "优先使用此处配置的密钥；若未配置，则使用环境变量 DASHSCOPE_API_KEY"),
                     },
                 ),
                 "negative_prompt": ("STRING", {"multiline": True, "default": "", "tooltip": "负面提示词"}),
@@ -155,11 +152,7 @@ class Wan2_5_T2I:
         # 获取 API Key：优先使用传入的参数，否则从环境变量读取
         effective_api_key = api_key if api_key else os.environ.get("DASHSCOPE_API_KEY", "")
         if not effective_api_key:
-            raise ValueError(
-                "请提供 DashScope API Key。\n"
-                "方式1：在节点中配置 api_key 参数\n"
-                "方式2：设置环境变量 DASHSCOPE_API_KEY"
-            )
+            raise ValueError("请提供 DashScope API Key。\n" "方式1：在节点中配置 api_key 参数\n" "方式2：设置环境变量 DASHSCOPE_API_KEY")
 
         # 设置 API Key
         dashscope.api_key = effective_api_key
@@ -223,12 +216,12 @@ class Wan2_5_T2I:
 
         # 打印扩展后的提示词（如果有）
         result = response.output.results[0]
-        if hasattr(result, "actual_prompt") and result.actual_prompt:
-            print(
-                f"Extended prompt: {result.actual_prompt[:100]}..."
-                if len(result.actual_prompt) > 100
-                else f"Extended prompt: {result.actual_prompt}"
-            )
+        try:
+            actual_prompt = result.actual_prompt
+            if actual_prompt:
+                print(f"Extended prompt: {actual_prompt[:100]}..." if len(actual_prompt) > 100 else f"Extended prompt: {actual_prompt}")
+        except (KeyError, AttributeError):
+            pass  # actual_prompt 不存在，跳过
 
         # 下载并转换生成的图片
         output_tensor = self.download_and_convert_image(result.url)

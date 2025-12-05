@@ -89,10 +89,7 @@ class Wan2_5_T2V:
                     {
                         "multiline": False,
                         "default": "",
-                        "tooltip": (
-                            "DashScope API密钥（可选）。\n"
-                            "优先使用此处配置的密钥；若未配置，则使用环境变量 DASHSCOPE_API_KEY"
-                        ),
+                        "tooltip": ("DashScope API密钥（可选）。\n" "优先使用此处配置的密钥；若未配置，则使用环境变量 DASHSCOPE_API_KEY"),
                     },
                 ),
                 "audio": (
@@ -269,11 +266,7 @@ class Wan2_5_T2V:
         # 获取 API Key：优先使用传入的参数，否则从环境变量读取
         effective_api_key = api_key if api_key else os.environ.get("DASHSCOPE_API_KEY", "")
         if not effective_api_key:
-            raise ValueError(
-                "请提供 DashScope API Key。\n"
-                "方式1：在节点中配置 api_key 参数\n"
-                "方式2：设置环境变量 DASHSCOPE_API_KEY"
-            )
+            raise ValueError("请提供 DashScope API Key。\n" "方式1：在节点中配置 api_key 参数\n" "方式2：设置环境变量 DASHSCOPE_API_KEY")
 
         # 设置 API Key
         dashscope.api_key = effective_api_key
@@ -345,9 +338,12 @@ class Wan2_5_T2V:
         print(f"Video URL: {video_url}")
 
         # 打印扩展后的提示词（如果有）
-        if hasattr(result.output, "actual_prompt") and result.output.actual_prompt:
+        try:
             actual_prompt = result.output.actual_prompt
-            print(f"Extended prompt: {actual_prompt[:100]}..." if len(actual_prompt) > 100 else f"Extended prompt: {actual_prompt}")
+            if actual_prompt:
+                print(f"Extended prompt: {actual_prompt[:100]}..." if len(actual_prompt) > 100 else f"Extended prompt: {actual_prompt}")
+        except (KeyError, AttributeError):
+            pass  # actual_prompt 不存在，跳过
 
         # 下载视频到临时目录
         video_path = self.download_video(video_url, filename_prefix="wan_t2v")
